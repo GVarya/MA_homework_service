@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  payment-service:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - AMQP_URL=amqp://guest:guest@rabbitmq:5672/
+    depends_on:
+      - rabbitmq
+    volumes:
+      - ./app:/app/app
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      - RABBITMQ_DEFAULT_USER=guest
+      - RABBITMQ_DEFAULT_PASS=guest
