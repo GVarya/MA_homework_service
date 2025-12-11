@@ -35,11 +35,11 @@ class SolutionRepo:
         )
         if s is None:
             raise KeyError
-        return Solution.from_orm(s)
+        return Solution.model_validate(s)
 
     def get_solutions_by_homework(self, homework_id: UUID) -> list[Solution]:
         return [
-            Solution.from_orm(s)
+            Solution.model_validate(s)
             for s in self.db.query(DBSolution)
             .filter(DBSolution.homework_id == homework_id)
             .all()
@@ -47,7 +47,7 @@ class SolutionRepo:
 
     def get_solutions_by_student(self, student_id: UUID) -> list[Solution]:
         return [
-            Solution.from_orm(s)
+            Solution.model_validate(s)
             for s in self.db.query(DBSolution)
             .filter(DBSolution.student_id == student_id)
             .all()
@@ -64,7 +64,7 @@ class SolutionRepo:
         s.status = status
         self.db.commit()
         self.db.refresh(s)
-        return Solution.from_orm(s)
+        return Solution.model_validate(s)
 
     def submit_solution(self, id: UUID) -> Solution:
         s = (
@@ -78,7 +78,7 @@ class SolutionRepo:
         s.submitted_at = datetime.utcnow()
         self.db.commit()
         self.db.refresh(s)
-        return Solution.from_orm(s)
+        return Solution.model_validate(s)
 
     def return_solution(self, id: UUID, feedback: str) -> Solution:
         s = (
@@ -92,7 +92,7 @@ class SolutionRepo:
         s.feedback = feedback
         self.db.commit()
         self.db.refresh(s)
-        return Solution.from_orm(s)
+        return Solution.model_validate(s)
 
     def grade_solution(self, id: UUID, grade: int, feedback: str | None = None) -> Solution:
         s = (
@@ -108,4 +108,4 @@ class SolutionRepo:
             s.feedback = feedback
         self.db.commit()
         self.db.refresh(s)
-        return Solution.from_orm(s)
+        return Solution.model_validate(s)

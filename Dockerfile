@@ -1,29 +1,28 @@
-# FROM python:3.10
+# Используем официальный образ Python
+FROM python:3.11-slim
 
-# # Установка системных зависимостей (если нужны)
-# RUN apt-get update && apt-get install -y \
-#     curl \
-#     && rm -rf /var/lib/apt/lists/*
+# Устанавливаем рабочую директорию в контейнере
+WORKDIR /app
 
-# # Устанавливаем рабочую директорию
-# WORKDIR /app
+# Устанавливаем переменные окружения
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
 
-# # Копируем файл с зависимостями
-# COPY requirements.txt .
+# Устанавливаем системные зависимости
+RUN apt-get update && apt-get install -y \
+    gcc \
+    postgresql-client \
+    && rm -rf /var/lib/apt/lists/*
 
-# # Устанавливаем зависимости
-# RUN pip install --no-cache-dir --upgrade -r requirements.txt
+# Копируем requirements.txt и устанавливаем зависимости
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
-# # Копируем проект
-# COPY ./app ./app
+# Копируем весь код приложения
+COPY . .
 
-# # Команда запуска
-# CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Открываем порт
+EXPOSE 8000
 
-FROM python:3.10
-WORKDIR /code
-RUN ls
-COPY ./requirements.txt /code/
-RUN pip install -r requirements.txt
-COPY app /code/app
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Команда запуска (app.main:app для твоей структуры)
+CMD ["python", "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

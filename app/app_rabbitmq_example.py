@@ -1,29 +1,9 @@
 import asyncio
-import json
 import logging
-import traceback
-
-from aio_pika import connect_robust, IncomingMessage
+from aio_pika import connect_robust
 from app.settings import settings
-from app.services.homework_service import HomeworkService
 
 logger = logging.getLogger(__name__)
-
-async def process_payment_success(msg: IncomingMessage):
-    """Обработка сообщения о успешном платеже"""
-    try:
-        data = json.loads(msg.body.decode())
-        course_id = data["course_id"]
-        student_id = data["student_id"]
-        service = HomeworkService()
-        service.activate_homeworks_by_course(course_id)
-        logger.info(f"Activated homeworks for course {course_id}, student {student_id}")
-        await msg.ack()
-    except Exception as e:
-        logger.error(f"Error processing payment: {e}")
-        traceback.print_exc()
-        await msg.ack()
-
 
 async def consume():
     """Подключится к RabbitMQ с retry логикой"""
@@ -34,8 +14,10 @@ async def consume():
         try:
             logger.info(f"Attempting to connect to RabbitMQ (attempt {attempt + 1}/{max_retries})...")
             
+            loop = asyncio.get_event_loop()
             connection = await connect_robust(
-                settings.amqp_url,
+                settings.amqp_url, 
+                loop=loop,
                 timeout=10
             )
             
@@ -44,12 +26,12 @@ async def consume():
                 logger.info("✅ Successfully connected to RabbitMQ")
                 
                 # Здесь твой код обработки очередей
-                # Пример:
                 # exchange = await channel.get_exchange('homework_exchange')
-                # queue = await channel.declare_queue('homework_queue')
+                # queue = await channel.get_queue('homework_queue')
+                # Пример слушания очереди:
                 # async with queue.iterator() as queue_iter:
                 #     async for message in queue_iter:
-                #         await process_payment_success(message)
+                #         print(f"Message: {message}")
                 
                 # Просто слушаем бесконечно
                 await asyncio.sleep(999999)
@@ -67,6 +49,8 @@ async def consume():
 
 def start_rabbitmq_consumer():
     """Запустить RabbitMQ consumer в фоне"""
+    import asyncio
+    
     try:
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)

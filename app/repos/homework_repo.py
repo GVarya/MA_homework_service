@@ -12,11 +12,11 @@ class HomeworkRepo:
         self.db: Session = next(get_db())
 
     def get_homeworks(self) -> list[Homework]:
-        return [Homework.from_orm(h) for h in self.db.query(DBHomework).all()]
+        return [Homework.model_validate(h) for h in self.db.query(DBHomework).all()]
 
     def get_homeworks_by_course(self, course_id: UUID) -> list[Homework]:
         return [
-            Homework.from_orm(h)
+            Homework.model_validate(h)
             for h in self.db.query(DBHomework)
             .filter(DBHomework.course_id == course_id)
             .all()
@@ -30,7 +30,7 @@ class HomeworkRepo:
         )
         if h is None:
             raise KeyError
-        return Homework.from_orm(h)
+        return Homework.model_validate(h)
 
     def create_homework(self, homework: Homework) -> Homework:
         db_obj = DBHomework(
@@ -57,7 +57,7 @@ class HomeworkRepo:
         db_obj.status = status
         self.db.commit()
         self.db.refresh(db_obj)
-        return Homework.from_orm(db_obj)
+        return Homework.model_validate(db_obj)
 
     def publish_homework(self, id: UUID) -> Homework:
         db_obj = (
@@ -71,7 +71,7 @@ class HomeworkRepo:
         db_obj.published_at = datetime.utcnow()
         self.db.commit()
         self.db.refresh(db_obj)
-        return Homework.from_orm(db_obj)
+        return Homework.model_validate(db_obj)
 
     def activate_by_course(self, course_id: UUID) -> list[Homework]:
         homeworks = (
@@ -84,4 +84,4 @@ class HomeworkRepo:
             hw.status = HomeworkStatus.ACTIVE
             hw.published_at = datetime.utcnow()
         self.db.commit()
-        return [Homework.from_orm(h) for h in homeworks]
+        return [Homework.model_validate(h) for h in homeworks]
