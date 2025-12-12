@@ -85,6 +85,21 @@ jobs:
   test:
     runs-on: ubuntu-latest
 
+    # PostgreSQL сервис для E2E тестов
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: homework_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -106,22 +121,36 @@ jobs:
       - name: Build Docker image
         run: docker build -t homework_service .
 
-      - name: Run e2e tests
+      # ============================================
+      # E2E ТЕСТЫ С DOCKER-COMPOSE
+      # ============================================
+
+      - name: Start Docker services with docker-compose
         run: |
-          # Запускаем контейнер
-          docker run -d --name homework_service \
-            -p 8000:8000 \
-            --name homework_test \
-            homework_service
+          docker-compose -f docker-compose.yml up -d
+          sleep 10
 
-          # Ждём запуска
-          sleep 5
+          # Проверяем что БД готова
+          until docker exec homework_postgres psql -U postgres -d homework_test -c "SELECT 1" > /dev/null 2>&1; do
+            echo "Waiting for database..."
+            sleep 1
+          done
 
-          # Проверяем что сервис работает
+          echo "✅ Database is ready!"
+
+          # Проверяем что API работает
           curl -f http://localhost:8000/api/homeworks/ || exit 1
 
-          # Запускаем E2E тесты
-          pytest tests/e2e -v
+          echo "✅ API is ready!"
+
+      - name: Run e2e tests
+        run: pytest tests/e2e -v
+        env:
+          DATABASE_URL: postgresql://postgres:password@localhost:5432/homework_test
+
+      - name: Stop Docker services
+        if: always()
+        run: docker-compose -f docker-compose.yml down
 
   build-and-push:
     name: Build and Push to DockerHub
