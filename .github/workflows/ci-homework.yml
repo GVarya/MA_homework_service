@@ -127,6 +127,8 @@ jobs:
 
       - name: Start Docker services with docker-compose
         run: |
+          docker compose -f docker-compose.yml down --remove-orphans || true
+        
           docker compose -f docker-compose.yml up -d
           sleep 10
 
