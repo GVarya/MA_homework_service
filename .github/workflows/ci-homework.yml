@@ -85,19 +85,19 @@ jobs:
   test:
     runs-on: ubuntu-latest
 
-    # services:
-    #   postgres:
-    #     image: postgres:15
-    #     env:
-    #       POSTGRES_PASSWORD: password
-    #       POSTGRES_DB: homework_test
-    #     options: >-
-    #       --health-cmd pg_isready
-    #       --health-interval 10s
-    #       --health-timeout 5s
-    #       --health-retries 5
-    #     ports:
-    #       - 5432:5432
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: homework_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
 
     steps:
       - name: Checkout
@@ -122,6 +122,12 @@ jobs:
 
       - name: Start Docker services with docker-compose
         run: |
+          docker ps -aq | xargs -r docker kill || true
+          docker ps -aq | xargs -r docker rm || true
+        
+          lsof -i :5432 -t | xargs -r kill -9 || true
+          lsof -i :5672 -t | xargs -r kill -9 || true
+          lsof -i :8000 -t | xargs -r kill -9 || true
           docker compose -f docker-compose.yml down --remove-orphans || true
         
           docker compose -f docker-compose.yml up -d
