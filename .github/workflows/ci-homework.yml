@@ -85,38 +85,6 @@ jobs:
   test:
     runs-on: ubuntu-latest
 
-    # ✅ ДОБАВЛЯЕМ СЕРВИСЫ (как в docker-compose)
-    services:
-      # PostgreSQL для unit-тестов
-      postgres:
-        image: postgres:15-alpine
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: password
-          POSTGRES_DB: homework_db
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
-
-      # RabbitMQ для тестов
-      rabbitmq:
-        image: rabbitmq:3-management
-        env:
-          RABBITMQ_DEFAULT_USER: guest
-          RABBITMQ_DEFAULT_PASS: guest
-        options: >-
-          --health-cmd "rabbitmq-diagnostics -q ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5672:5672
-          - 15672:15672
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -131,31 +99,22 @@ jobs:
           pip install --upgrade pip
           pip install -r requirements.txt
           pip install pytest requests
-        env:
-          TEST_DATABASE_URL: postgresql://postgres:password@localhost:5432/homework_db
-          POSTGRES_URL: postgresql://postgres:password@localhost:5432/homework_db
-          AMQP_URL: amqp://guest:guest@localhost:5672/
 
       - name: Run unit tests
         run: pytest tests/unit -v
-        env:
-          TEST_DATABASE_URL: postgresql://postgres:password@localhost:5432/homework_db
-          POSTGRES_URL: postgresql://postgres:password@localhost:5432/homework_db
-          AMQP_URL: amqp://guest:guest@localhost:5672/
 
       - name: Build Docker image
         run: docker build -t homework_service .
 
-      - name: Run e2e tests (Docker)
+      - name: Run e2e tests
         run: |
+          # Запускаем контейнер
           docker run -d --name homework_service \
             -p 8000:8000 \
-            -e POSTGRES_URL=postgresql://postgres:password@localhost:5432/homework_db \
-            -e AMQP_URL=amqp://guest:guest@localhost:5672/ \
-            --network host \
+            --name homework_test \
             homework_service
 
-          # Ждём запуска сервиса
+          # Ждём запуска
           sleep 5
 
           # Проверяем что сервис работает
@@ -163,8 +122,6 @@ jobs:
 
           # Запускаем E2E тесты
           pytest tests/e2e -v
-        env:
-          TEST_DATABASE_URL: postgresql://postgres:password@localhost:5432/homework_db
 
   build-and-push:
     name: Build and Push to DockerHub
