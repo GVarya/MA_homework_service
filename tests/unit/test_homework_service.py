@@ -139,11 +139,14 @@ class LocalHomeworkRepo:
         """Получить домашки по курсу"""
         return [hw for hw in self.homeworks.values() if hw.course_id == course_id]
 
-    def publish_homework(self, hw: Homework) -> Homework:
-        """Опубликовать домашку"""
-        self.homeworks[hw.id] = hw
+    def publish_homework(self, homework_id: str) -> Homework:
+        hw = self.homeworks.get(homework_id)
+        if hw:
+            hw.status = HomeworkStatus.ACTIVE
+            from datetime import datetime
+            hw.published_at = datetime.utcnow()
+            self.homeworks[homework_id] = hw
         return hw
-
 
 class LocalSolutionRepo:
     """Локальный репозиторий решений (в-памяти)"""
