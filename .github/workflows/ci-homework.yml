@@ -127,7 +127,7 @@ jobs:
 
       - name: Start Docker services with docker-compose
         run: |
-          docker-compose -f docker-compose.yml up -d
+          docker compose -f docker-compose.yml up -d
           sleep 10
 
           # Проверяем что БД готова
@@ -150,7 +150,7 @@ jobs:
 
       - name: Stop Docker services
         if: always()
-        run: docker-compose -f docker-compose.yml down
+        run: docker compose -f docker-compose.yml down
 
   build-and-push:
     name: Build and Push to DockerHub
