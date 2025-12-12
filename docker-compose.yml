@@ -1,7 +1,6 @@
 version: '3.8'
 
 services:
-  # PostgreSQL база данных
   postgres:
     image: postgres:15-alpine
     container_name: homework_postgres
@@ -18,11 +17,11 @@ services:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
       timeout: 5s
-      retries: 10
+      retries: 20
+      start_period: 20s
     networks:
       - homework_network
 
-  # RabbitMQ сервис сообщений (для homework_service)
   rabbitmq:
     image: rabbitmq:3.12-management-alpine
     container_name: homework_rabbitmq
@@ -33,7 +32,7 @@ services:
       - rabbitmq_data:/var/lib/rabbitmq
     ports:
       - "5672:5672"
-      - "15672:15672"  # Management UI
+      - "15672:15672"
     healthcheck:
       test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
       interval: 5s
@@ -43,7 +42,6 @@ services:
     networks:
       - homework_network
 
-  # Homework Service (микросервис домашних заданий)
   homework_service:
     build:
       context: .

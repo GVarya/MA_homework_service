@@ -131,9 +131,8 @@ jobs:
           docker compose -f docker-compose.yml down --remove-orphans || true
         
           docker compose -f docker-compose.yml up -d
-          sleep 10
+          sleep 40
 
-          # Проверяем что БД готова
           until docker exec homework_postgres psql -U postgres -d homework_test -c "SELECT 1" > /dev/null 2>&1; do
             echo "Waiting for database..."
             sleep 1
