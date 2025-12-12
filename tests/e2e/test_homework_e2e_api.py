@@ -37,6 +37,7 @@ def test_create_homework(course_id):
     assert data["status"].lower() == "created"
 
 
+
 def test_publish_homework(course_id):
     """Публикация домашки меняет статус на active."""
     # 1. создаём
