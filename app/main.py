@@ -8,11 +8,8 @@ app = FastAPI(title="Homework Service")
 
 @app.on_event("startup")
 async def startup():
-    """Инициализация при запуске приложения"""
-    # Инициализируем БД
     init_db()
     
-    # Запускаем RabbitMQ consumer в фоне
     asyncio.create_task(rabbitmq.consume())
 
 app.include_router(homework_router, prefix="/api")
