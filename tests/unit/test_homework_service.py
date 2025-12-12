@@ -100,10 +100,6 @@ def test_submit_solution(homework_service: HomeworkService, course_id, student_i
     assert solution.answer == 'My solution'
 
 
-tests/unit/test_homework_service.py
-
-tests/unit/test_homework_service.py
-tests/unit/test_homework_service.py
 # """Unit tests for HomeworkService with full mocking"""
 
 # import pytest
