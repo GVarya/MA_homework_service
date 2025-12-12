@@ -2,7 +2,7 @@ import pytest
 import requests
 from uuid import uuid4
 
-BASE_URL = "http://homework_service:8000/api"
+BASE_URL = "http://localhost:8000/api"
 
 @pytest.fixture(scope="session")
 def course_id():
