@@ -85,20 +85,19 @@ jobs:
   test:
     runs-on: ubuntu-latest
 
-    # PostgreSQL сервис для E2E тестов
-    services:
-      postgres:
-        image: postgres:15
-        env:
-          POSTGRES_PASSWORD: password
-          POSTGRES_DB: homework_test
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
+    # services:
+    #   postgres:
+    #     image: postgres:15
+    #     env:
+    #       POSTGRES_PASSWORD: password
+    #       POSTGRES_DB: homework_test
+    #     options: >-
+    #       --health-cmd pg_isready
+    #       --health-interval 10s
+    #       --health-timeout 5s
+    #       --health-retries 5
+    #     ports:
+    #       - 5432:5432
 
     steps:
       - name: Checkout
@@ -121,10 +120,6 @@ jobs:
       - name: Build Docker image
         run: docker build -t homework_service .
 
-      # ============================================
-      # E2E ТЕСТЫ С DOCKER-COMPOSE
-      # ============================================
-
       - name: Start Docker services with docker-compose
         run: |
           docker compose -f docker-compose.yml down --remove-orphans || true
@@ -138,12 +133,12 @@ jobs:
             sleep 1
           done
 
-          echo "✅ Database is ready!"
+          echo " Database is ready!"
 
           # Проверяем что API работает
           curl -f http://localhost:8000/api/homeworks/ || exit 1
 
-          echo "✅ API is ready!"
+          echo " API is ready!"
 
       - name: Run e2e tests
         run: pytest tests/e2e -v
