@@ -162,6 +162,11 @@ class LocalSolutionRepo:
     def get_solutions_by_homework(self, hw_id: str) -> list:
         """Получить решения по домашке"""
         return [sol for sol in self.solutions.values() if sol.homework_id == hw_id]
+    
+    def create_solution(self, sol: Solution) -> Solution: 
+        """Создать решение"""
+        self.solutions[sol.id] = sol
+        return sol
 
 
 class LocalProgressRepo:
