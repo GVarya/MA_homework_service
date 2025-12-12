@@ -112,31 +112,21 @@ from app.models.solution import Solution, SolutionStatus
 from app.models.requests import CreateHomeworkRequest, PublishHomeworkRequest, SubmitSolutionRequest
 
 
-# ============================================
-# IN-MEMORY REPOSITORIES (БЕЗ БД)
-# ============================================
-
 class LocalHomeworkRepo:
-    """Локальный репозиторий домашних заданий (в-памяти)"""
-
     def __init__(self):
-        self.homeworks = {}  # id -> Homework
+        self.homeworks = {} 
 
     def create_homework(self, hw: Homework) -> Homework:
-        """Создать домашку"""
         self.homeworks[hw.id] = hw
         return hw
 
     def get_homework_by_id(self, hw_id: str) -> Homework:
-        """Получить домашку по ID"""
         return self.homeworks.get(hw_id)
 
     def get_homeworks(self) -> list:
-        """Получить все домашки"""
         return list(self.homeworks.values())
 
     def get_homeworks_by_course(self, course_id: str) -> list:
-        """Получить домашки по курсу"""
         return [hw for hw in self.homeworks.values() if hw.course_id == course_id]
 
     def publish_homework(self, homework_id: str) -> Homework:
@@ -149,42 +139,31 @@ class LocalHomeworkRepo:
         return hw
 
 class LocalSolutionRepo:
-    """Локальный репозиторий решений (в-памяти)"""
-
     def __init__(self):
-        self.solutions = {}  # id -> Solution
+        self.solutions = {}
 
-    def submit_solution(self, sol: Solution) -> Solution:
-        """Отправить решение"""
-        self.solutions[sol.id] = sol
+    def submit_solution(self, solution_id: str) -> Solution:
+        sol = self.solutions.get(solution_id)
+        if sol:
+            sol.status = SolutionStatus.SUBMITTED
         return sol
 
     def get_solutions_by_homework(self, hw_id: str) -> list:
-        """Получить решения по домашке"""
         return [sol for sol in self.solutions.values() if sol.homework_id == hw_id]
     
     def create_solution(self, sol: Solution) -> Solution: 
-        """Создать решение"""
         self.solutions[sol.id] = sol
         return sol
 
 
 class LocalProgressRepo:
-    """Локальный репозиторий прогресса (в-памяти)"""
-
     def __init__(self):
         self.progress = {}
 
 
-# ============================================
-# FIXTURES
-# ============================================
-
 @pytest.fixture(scope='session')
 def homework_service():
-    """Фикстура с сервисом (используем локальные репозитории)"""
     service = HomeworkService()
-    # Переопределяем репозитории на локальные
     service.hw_repo = LocalHomeworkRepo()
     service.sol_repo = LocalSolutionRepo()
     service.prog_repo = LocalProgressRepo()
@@ -200,13 +179,7 @@ def course_id():
 def student_id():
     return uuid4()
 
-
-# ============================================
-# TESTS
-# ============================================
-
 def test_create_homework(homework_service: HomeworkService, course_id):
-    """Тест создания домашнего задания"""
     request = CreateHomeworkRequest(
         course_id=course_id,
         title='Test Homework',
@@ -219,8 +192,6 @@ def test_create_homework(homework_service: HomeworkService, course_id):
 
 
 def test_publish_homework(homework_service: HomeworkService, course_id):
-    """Тест публикации домашнего задания"""
-    # Создаём домашку
     create_req = CreateHomeworkRequest(
         course_id=course_id,
         title='Homework to Publish',
@@ -228,7 +199,6 @@ def test_publish_homework(homework_service: HomeworkService, course_id):
     )
     homework = homework_service.create_homework(create_req)
 
-    # Публикуем
     publish_req = PublishHomeworkRequest(homework_id=homework.id)
     published_hw = homework_service.publish_homework(publish_req)
 
@@ -237,7 +207,6 @@ def test_publish_homework(homework_service: HomeworkService, course_id):
 
 
 def test_publish_homework_wrong_status(homework_service: HomeworkService, course_id):
-    """Тест ошибки при публикации уже опубликованной домашки"""
     create_req = CreateHomeworkRequest(
         course_id=course_id,
         title='Already Published',
@@ -245,18 +214,14 @@ def test_publish_homework_wrong_status(homework_service: HomeworkService, course
     )
     homework = homework_service.create_homework(create_req)
 
-    # Публикуем первый раз
     publish_req = PublishHomeworkRequest(homework_id=homework.id)
     homework_service.publish_homework(publish_req)
 
-    # Пробуем опубликовать второй раз
     with pytest.raises(ValueError):
         homework_service.publish_homework(publish_req)
 
 
 def test_submit_solution(homework_service: HomeworkService, course_id, student_id):
-    """Тест отправки решения"""
-    # Создаём и публикуем домашку
     create_req = CreateHomeworkRequest(
         course_id=course_id,
         title='Homework for Solution',
@@ -267,7 +232,6 @@ def test_submit_solution(homework_service: HomeworkService, course_id, student_i
     publish_req = PublishHomeworkRequest(homework_id=homework.id)
     homework_service.publish_homework(publish_req)
 
-    # Отправляем решение
     solution_req = SubmitSolutionRequest(
         homework_id=homework.id,
         student_id=student_id,
